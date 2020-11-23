@@ -5,9 +5,12 @@ let player;
 let buffer = 50;
 let score = 0;
 let freq = 0.005;
+let maxFreq = 0.03;
 let speed = 4;
 let health = 5;
 let level = 1;
+let gameState = 'start';
+let actions = ['l', 'r', 's', 'n'];
 
 function setup() {
   createCanvas(600, 1200);
@@ -20,18 +23,25 @@ function setup() {
   lane3 = 5 * lane1;
   playHeight = (height * 9) / 10;
   player = new Player(2);
+
+  drawHud();
+  gameState = 'training';
+  player.train();
 }
 
 function draw() {
-  if (health > 0) {
-    game();
-  } else {
-    gameOver();
+  drawHud();
+  if (gameState === 'playing') {
+    if (health > 0) {
+      game();
+    } else {
+      gameOver();
+    }
+  } else if (gameState === 'training') {
   }
 }
 
 function game() {
-  drawHud();
   player.update();
   checkBullets();
   spawnNpc();
@@ -95,7 +105,7 @@ function checkBullets() {
 function adjustLevel() {
   if (frameCount % 700 == 0) {
     speed *= 1.1;
-    freq *= 1.1;
+    freq = min(maxFreq, freq * 1.1);
     level++;
   }
 }
@@ -125,7 +135,7 @@ function checkNpcs() {
 
 function keyPressed() {
   if (keyCode == 32) {
-    bullets.push(new Bullet(player, 20));
+    player.shoot();
   } else if (keyCode == LEFT_ARROW) {
     player.goLeft();
   } else if (keyCode == RIGHT_ARROW) {
