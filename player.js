@@ -1,5 +1,5 @@
 class Player {
-  constructor(lane) {
+  constructor(lane, genes = []) {
     switch (lane) {
       case 1:
         this.x = lane1;
@@ -15,12 +15,12 @@ class Player {
     this.lane = lane;
     this.s = 50;
     let options = {
-      inputs: ['pLane', 'eLane', 'eDist', 'eType'],
+      inputs: ['pLane', 'eLane', 'eType'],
       outputs: ['label'],
       task: 'classification',
-      debug: 'true',
+      debug: 'false',
     };
-    this.genes = [];
+    this.genes = genes ?? [];
     this.newGenes = [];
     this.brain = ml5.neuralNetwork(options);
   }
@@ -61,12 +61,10 @@ class Player {
 
   train() {
     if (this.newGenes.length == 0) {
-      for (let i = 0; i < 200; i++) {
-        let create = random() < 0.5;
+      for (let i = 0; i < 1000; i++) {
         let inputs = {
           pLane: int(random(1, 4)),
           eLane: int(random(1, 4)),
-          eDist: random(0, height - playHeight),
           eType: random([0, 1]),
         };
 
@@ -100,7 +98,6 @@ class Player {
     let s = {
       pLane: this.lane,
       eLane: npc.lane,
-      eDist: npc.y,
       eType: npc.isEnemy ? 1 : 0,
     };
     return s;
@@ -115,9 +112,8 @@ class Player {
       let npc = npcs[0];
       let s = {
         pLane: this.lane,
-        eLane: npc.lane,
-        eDist: npc.y,
-        eType: npc.isEnemy ? 1 : 0,
+        eLane: npc?.lane,
+        eType: npc?.isEnemy ? 1 : 0,
       };
       this.newGenes.push(new Genome(s, { label: result[0].label }));
       this.act(result[0]);
@@ -132,7 +128,6 @@ class Player {
     let s = {
       pLane: this.lane,
       eLane: npc.lane,
-      eDist: npc.y,
       eType: npc.isEnemy ? 1 : 0,
     };
     this.newGenes.push(new Genome(s, { label: result[0].label }));

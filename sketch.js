@@ -3,14 +3,14 @@ let bullets = [];
 let npcs = [];
 let player;
 let buffer = 50;
-let score = 0;
-let freq = 0.005;
+let score, freq, speed, health, level;
 let maxFreq = 0.03;
-let speed = 4;
-let health = 5;
-let level = 1;
 let gameState = 'start';
 let actions = ['l', 'r', 's', 'n'];
+let generation = 1;
+let iteration = 1;
+let genePool = [];
+let bufferPool = [];
 
 function setup() {
   createCanvas(600, 1200);
@@ -22,10 +22,23 @@ function setup() {
   lane2 = 3 * lane1;
   lane3 = 5 * lane1;
   playHeight = (height * 9) / 10;
-  player = new Player(2);
 
-  drawHud();
+  createNewGame();
+}
+
+function createNewGame() {
+  freq = 0.01; //0.005
+  speed = 15; //4
+  health = 5;
+  level = 1;
   gameState = 'training';
+
+  let gene = null;
+  if (bufferPool.length > 0) {
+    gene = random(bufferPool);
+  }
+  score = 0;
+  player = new Player(2, gene ?? null);
   player.train();
 }
 
@@ -38,6 +51,11 @@ function draw() {
       gameOver();
     }
   } else if (gameState === 'training') {
+    push();
+    fill(200, 200, 0);
+    textAlign(CENTER, CENTER);
+    text(`TRAINING NEW GEN`, width / 2, height / 2);
+    pop();
   }
 }
 
@@ -56,7 +74,28 @@ function gameOver() {
   text(`GAME OVER`, width / 2, height / 2);
   text(`Your score : ${score}`, width / 2, height / 2 + 50);
   pop();
-  noLoop();
+
+  if (player && player.newGenes.length > 0) {
+    genePool.push({
+      score: score,
+      genes: player.newGenes,
+    });
+  }
+  if (iteration == 40) {
+    iteration = 0;
+    generation++;
+    genePool.sort(function (a, b) {
+      return b.score - a.score;
+    });
+    genePool.splice(int(genePool.length / 2), int(genePool.length / 2));
+    bufferPool = genePool;
+    genePool = [];
+    createNewGame();
+  } else {
+    iteration++;
+    createNewGame();
+  }
+  // noLoop();
 }
 
 function drawHud() {
@@ -67,6 +106,8 @@ function drawHud() {
   push();
   textAlign(RIGHT, CENTER);
   text(`Health ${health}`, (width * 9) / 10, height - 40);
+  text(`Iteration: ${iteration}`, (width * 9) / 10, 40);
+  text(`Gen: ${generation}`, (width * 9) / 10, 80);
   pop();
 }
 
